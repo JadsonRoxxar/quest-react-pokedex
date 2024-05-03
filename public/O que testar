@@ -1,0 +1,15 @@
+Quais validações devo realizar em uma API?
+As principais validações para as quais você deve se atentar ao testar uma API são:
+
+Validar o status retornado;
+Validar o header de retorno;
+Validar o body do response;
+Validar como sua API se comporta quando o serviço está fora;
+Validar o comportamento da API quando enviado um JSON/XML com uma estrutura incorreta;
+Validar o retorno com base nos requisitos definidos para cada tipo de dado enviado em sua API.
+Existem alguns erros mais comuns para os quais você também pode se atentar ao testar sua API, veja quais são:
+
+A API pode não atender à estrutura de dados enviada;
+Erros de segurança;
+Problemas de Multi-threading;
+Não implementação de retornos para erros em determinados cenários.

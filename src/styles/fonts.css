@@ -1,0 +1,26 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap')
+
+/* * {
+    color:#940cce;
+    background-color: #4a0966;
+} */
+
+/* export const themes = {
+    light: {
+        color: "#000000",
+        background: "#f5f5f5",
+        cardBackground: "#ffcb05",
+        cardColor: "#316cb3",
+        headerColorDetails: "#316cb3",
+        iconTheme: <FiSun size={36} color="orange"   />
+    },
+
+    dark: {
+        color: "#ffffff",
+        background: "#808080",
+        cardBackground: "#696969",
+        cardColor: "#ffcb05",
+        headerColorDetails: "#16529b",
+        iconTheme: <FiMoon size={36} color="black" />
+    }
+} */
