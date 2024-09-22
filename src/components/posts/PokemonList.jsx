@@ -12,7 +12,7 @@ function PokemonList() {
     const theme = useContext(ThemeContext)
 
     useEffect(() => {
-        catchPokeData("https://pokeapi.co/api/v2/pokemon?limit=10")
+        catchPokeData("https://pokeapi.co/api/v2/pokemon?limit=100")
     }, []);
 
     const catchPokeData = async (url) => {
