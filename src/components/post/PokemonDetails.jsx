@@ -19,6 +19,7 @@ function PokemonDetails() {
         async function catchPokeDetails() {
             try {
                 const response = await getPokemonsDetails(id)
+                console.log(response)
                 setPokeDetail(response)
             } catch (e) {
                 console.error('Error to get pokémon details', e)
