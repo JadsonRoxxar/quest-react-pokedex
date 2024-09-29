@@ -19,7 +19,6 @@ function PokemonDetails() {
         async function catchPokeDetails() {
             try {
                 const response = await getPokemonsDetails(id)
-                console.log(response)
                 setPokeDetail(response)
             } catch (e) {
                 console.error('Error to get pokémon details', e)
@@ -39,7 +38,7 @@ function PokemonDetails() {
                 <Name>
                     <Div>
                         <Link to={'/'}>
-                            <FiArrowLeft size={48} />
+                            <FiArrowLeft size={36} />
                         </Link>
                         <P>{pokeDetail.name}</P>
                         <Span>#0{pokeDetail.id}</Span>

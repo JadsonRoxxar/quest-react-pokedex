@@ -16,8 +16,8 @@ export const themes = {
 
     dark: {
         color: "#ffffff",
-        background: "#808080",
-        cardBackground: "#696969",
+        background: "#696969",
+        cardBackground: "#808080",
         cardColor: "#ffcb05",
         headerColorDetails: "#4b0966",
         iconTheme: <FiMoon size={36} color="black" />

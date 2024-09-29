@@ -1,135 +1,165 @@
 import axios from 'axios'
 import { Link } from 'react-router-dom'
-import { useContext, useEffect, useState } from 'react'
+import { useContext, useEffect, useState, useRef } from 'react'
 import { ThemeContext } from '../../context/theme-context'
 import styled from 'styled-components'
 
 
 function PokemonList() {
 
-    const [pokeType, setPokeType] = useState([])
-    const [poke, setPoke] = useState([])
-    const [nextUrl, setNextUrl] = useState("")
     const theme = useContext(ThemeContext)
+    const [types, setTypes] = useState([]);
+    const [pokemons, setPokemons] = useState([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [isLoading, setIsLoading] = useState(false);
+    const [filterByType, setFilterByType] = useState('');
+    const [allByType, setAllByType] = useState(0);
 
-    const pokeTypeName = {
-        default: '',
-        normal: 1, fighting: 2, flying: 3, poison: 4, ground: 5,
-        rock: 6, bug: 7, ghost: 8, steel: 9, fire: 10, water: 11,
-        grass: 12, electric: 13, psychic: 14, ice: 15, dragon: 16,
-        dark: 17, fairy: 18, stellar: 19, unknown: 10001
-    }
-
+    const firstFetch = useRef(true);
+    const maxPokeload = 10;
+    const [totalPokemons, setTotalPokemons] = useState(0);
 
     useEffect(() => {
-        filterByType(`https://pokeapi.co/api/v2/type/${pokeTypeName}?Limit=10`)
-        catchPokeData("https://pokeapi.co/api/v2/pokemon?limit=10")
+        const fetchTypes = async () => {
+            try {
+                const response = await axios.get('https://pokeapi.co/api/v2/type');
+                const typesData = response.data.results.map((type) => type.name);
+                setTypes(typesData);
+            } catch (error) {
+                console.error('Error catch Pokémon Type:', error);
+            }
+        };
+
+        const fetchTotalPokemons = async () => {
+            try {
+                // Busca o total de Pokémons
+                const response = await axios.get('https://pokeapi.co/api/v2/pokemon');
+                setTotalPokemons(response.data.count);
+            } catch (error) {
+                console.error('Error catch Pokémons:', error);
+            }
+        };
+
+        fetchTypes();
+        fetchTotalPokemons(); // Busca o total de Pokémons ao iniciar
     }, []);
-    const filterByType = async (url) => {
-        try {
-            const response = await axios.get(url);
-            const { results, next } = response.data;
-            const pokedex = results.map(async (result) => {
-                const pokeFilter = await axios.get(result.url);
-                return pokeFilter.data;
-            });
-            const pokeTypeData = await Promise.all(pokedex)
-            setPokeType(() => [...pokeType, ...pokeTypeData]);
-            setNextUrl(next);
-        } catch (e) {
-            console.error('Error filter Pokemon', e.message);
 
-        }
-    }
+    useEffect(() => {
+        const fetchPokemons = async () => {
+            setIsLoading(true);
 
-    // const filterMorePokemon = async () => {
-    //     if (nextUrl) {
-    //         filterByType(nextUrl)
-    //     }
-    // }
+            if (currentPage === 1) {
+                firstFetch.current = true;
+            }
 
-    const catchPokeData = async (url) => {
-        try {
-            const response = await axios.get(url);
-            const { results, next } = response.data;
-            const pokedex = results.map(async (result) => {
-                const pokeRes = await axios.get(result.url);
-                return pokeRes.data;
-            });
-            const pokeData = await Promise.all(pokedex);
-            setPoke(() => [...poke, ...pokeData]);
-            setNextUrl(next);
-        } catch (e) {
-            console.error('Error catch Pokemon', e.message);
-        }
-    }
+            try {
+                let pokemonData = [];
 
-    const loadMorePokemon = async () => {
-        if (nextUrl) {
-            catchPokeData(nextUrl)
-        }
-    }
+                if (filterByType) {
+                    // Busca os pokémons por tipo
+                    const response = await axios.get(`https://pokeapi.co/api/v2/type/${filterByType}`);
+                    setAllByType(response.data.pokemon.length);
 
-    <FilterInput style={{ color: theme.theme.color, backgroundColor: theme.theme.headerColorDetails }} >FILTER BY TYPE
+                    // Calcula o índice inicial e final corretos para fatiar a lista
+                    const startIndex = (currentPage - 1) * maxPokeload;
+                    const endIndex = Math.min(startIndex + maxPokeload, allByType);
 
-        <select>
-            <option onChange={pokeType[0].value}>Select Type</option>
-            <option onChange={pokeTypeName[1].value}>Normal</option>
-            <option onChange={pokeTypeName[2].value}>Fighting</option>
-            <option onChange={pokeTypeName[3].value}>Flying</option>
-            <option onChange={pokeTypeName[4].value}>Poison</option >
-            <option onChange={pokeTypeName[5].value}> Ground</option >
-            <option onChange={pokeTypeName[6].value}>Rock</option>
-            <option onChange={pokeTypeName[7].value}>Bug</option>
-            <option onChange={pokeTypeName[8].value}>Ghost</option>
-            <option onChange={pokeTypeName[9].value}>Steel</option>
-            <option onChange={pokeTypeName[10].value}>Fire</option>
-            <option onChange={pokeTypeName[11].value}>Water</option>
-            <option onChange={pokeTypeName[12].value}>Grass</option>
-            <option onChange={pokeTypeName[13].value}>Electric</option>
-            <option onChange={pokeTypeName[14].value}>Psychic</option>
-            <option onChange={pokeTypeName[15].value}>Ice</option>
-            <option onChange={pokeTypeName[16].value}>Dragon</option>
-            <option onChange={pokeTypeName[17].value}>Dark</option>
-            <option onChange={pokeTypeName[18].value}>Fairy</option>
-            <option onChange={pokeTypeName[19].value}>Stellar</option>
-            <option onChange={pokeTypeName[20].value}>Unknown</option>
-        </select>
+                    pokemonData = await Promise.all(
+                        response.data.pokemon
+                            .slice(startIndex, endIndex) // Fatia a lista corretamente
+                            .map(async ({ pokemon }) => {
+                                const pokemonResponse = await axios.get(pokemon.url);
+                                return pokemonResponse.data;
+                            })
+                    );
+                } else {
+                    // Busca todos os tipos
+                    const offset = (currentPage - 1) * maxPokeload;
+                    const response = await axios.get(
+                        `https://pokeapi.co/api/v2/pokemon?limit=${maxPokeload}&offset=${offset}`
+                    );
+                    pokemonData = await Promise.all(
+                        response.data.results.map(async (pokemon) => {
+                            const pokemonResponse = await axios.get(pokemon.url);
+                            return pokemonResponse.data;
+                        })
+                    );
+                }
 
+                // Atualiza o estado dos Pokémons
+                setPokemons((prevPokemons) => {
+                    if (firstFetch.current && currentPage === 1) {
+                        firstFetch.current = false;
+                        return pokemonData;
+                    } else {
+                        return [...prevPokemons, ...pokemonData];
+                    }
+                });
 
-    </FilterInput >
+            } catch (error) {
+                console.error('Erro ao buscar Pokémon:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchPokemons();
+    }, [filterByType, currentPage]);
+
+    const handleLoadMore = () => {
+        setCurrentPage((prevPage) => prevPage + 1);
+    };
+
+    useEffect(() => {
+        setCurrentPage(1);
+        firstFetch.current = true;
+        setAllByType(10); // IMPORTANTE: Resetar allByType!
+    }, [filterByType]);
 
     return (
+        <>
+            <Select value={filterByType} onChange={(e) => setFilterByType(e.target.value)}>
+                <option value="">All Types</option>
+                {types.map((typeName) => (
+                    <option key={typeName} value={typeName}>
+                        {typeName}
+                    </option>
+                ))}
+            </Select>
 
+            {isLoading && <div>Loading Pokémons...</div>}
 
-        <Section style={{ backgroundColor: theme.theme.background }}>
-
-            {
-                pokeType.slice(0, poke).map((poke, index) => (
-                    <Link to={`/pokemon/${poke.id}`} key={index}>
+            <Section style={{ backgroundColor: theme.theme.background }}>
+                {pokemons.map((pokemon, index) => (
+                    <Link to={`/pokemon/${pokemon.id}`} key={index}>
                         <Div style={{ backgroundColor: theme.theme.cardBackground }}>
-                            <Id>#0{poke.id}</Id>
-                            <Img src={poke.sprites?.front_default} alt={poke.name} />
-                            <Name>{poke.name}</Name>
+                            <Id>#{pokemons.id}</Id>
+                            <Img src={pokemon.sprites.front_default} alt={pokemon.name} />
+                            <Name>{pokemon.name}</Name>
                         </Div>
+
                     </Link>
-                ))
-            }
+                ))}
 
-
-            {
-                poke < pokeType.length && (
-
-                    < LoadButton style={{ color: theme.theme.color, backgroundColor: theme.theme.headerColorDetails }} onClick={loadMorePokemon} > Load more </LoadButton >
+                {!isLoading && (filterByType ? pokemons.length < allByType : pokemons.length < totalPokemons) && (
+                    <LoadButton onClick={handleLoadMore} disabled={isLoading} style={{ color: theme.theme.color, backgroundColor: theme.theme.headerColorDetails }}>
+                        {isLoading ? 'Loading...' : 'Loading More'}
+                    </LoadButton>
                 )
-            }
+                }
+            </Section>
 
 
-        </Section >
-
-    )
+        </>
+    );
 }
 
+
+const Select = styled.select`
+background-color: #316cb3;
+color: #ffcb05;
+text-transform: capitalize;
+border-radius: 0.5rem;`
 
 const Section = styled.section`
 max-width: 100%;
@@ -144,13 +174,6 @@ gap: 0.625rem;
 align-items: center;
 justify-content: center;
 box-shadow: inset 0 0 0.313rem 0.313rem rgba(0, 0, 0, 0.257);
-`
-
-const FilterInput = styled.div`
-width: 100%;
-height: 2.5rem;
-padding: 0.5rem;
-font-weight: bold;
 `
 
 const Div = styled.div`
